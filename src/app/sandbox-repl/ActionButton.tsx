@@ -53,13 +53,26 @@ export const ActionButton = ({
         .join(' ')
         .trim()}
     >
-      {isPending && (
+      <span
+        aria-hidden="true"
+        className={[
+          'inline-flex h-4 w-4 shrink-0 items-center justify-center transition-opacity duration-200',
+          isPending ? 'opacity-100' : 'opacity-0',
+        ]
+          .join(' ')
+          .trim()}
+      >
         <span
-          aria-hidden="true"
-          className="h-4 w-4 animate-spin rounded-full border-2 border-current border-r-transparent"
+          className={[
+            'h-4 w-4 rounded-full border-2 border-current border-r-transparent',
+            isPending ? 'animate-spin' : 'animate-none',
+          ]
+            .join(' ')
+            .trim()}
         />
-      )}
+      </span>
       <span className="leading-none">{children}</span>
+      <span aria-hidden="true" className="inline-flex h-4 w-4 shrink-0 opacity-0" />
     </button>
   )
 }

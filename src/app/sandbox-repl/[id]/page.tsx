@@ -11,31 +11,36 @@ export default async function SandboxPage({
   const sandbox = await Sandbox.get({ sandboxId: id })
   const status = sandbox.status
 
-  const statusStyles: Record<string, { label: string; badgeClass: string; chipClass: string }> = {
+  const statusStyles: Record<string, { label: string; badgeClass: string; chipClass: string; allowStop: boolean }> = {
     pending: {
       label: 'Pending',
       badgeClass: 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200',
       chipClass: 'bg-amber-100/60 text-amber-700',
+      allowStop: true,
     },
     running: {
       label: 'Running',
       badgeClass: 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200',
       chipClass: 'bg-emerald-100/60 text-emerald-700',
+      allowStop: true,
     },
     stopping: {
       label: 'Stopping',
       badgeClass: 'bg-sky-50 text-sky-700 ring-1 ring-inset ring-sky-200',
       chipClass: 'bg-sky-100/60 text-sky-700',
+      allowStop: false,
     },
     stopped: {
       label: 'Stopped',
       badgeClass: 'bg-slate-100 text-slate-600 ring-1 ring-inset ring-slate-200',
       chipClass: 'bg-slate-200/70 text-slate-600',
+      allowStop: false,
     },
     failed: {
       label: 'Failed',
       badgeClass: 'bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-200',
       chipClass: 'bg-rose-100/70 text-rose-700',
+      allowStop: false,
     },
   }
 
@@ -43,7 +48,9 @@ export default async function SandboxPage({
     label: status,
     badgeClass: 'bg-slate-100 text-slate-600 ring-1 ring-inset ring-slate-200',
     chipClass: 'bg-slate-200/70 text-slate-600',
+    allowStop: false,
   }
+  const canStop = statusMeta.allowStop
   return (
     <main className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-slate-50 px-4 py-12">
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-10">
@@ -68,17 +75,19 @@ export default async function SandboxPage({
               </p>
             </div>
 
-            <ActionButton
-              variant="danger"
-              className="px-6 py-2.5"
-              action={async () => {
-                'use server'
-                const sandbox = await Sandbox.get({ sandboxId: id })
-                await sandbox.stop()
-              }}
-            >
-              Stop Sandbox
-            </ActionButton>
+            {canStop ? (
+              <ActionButton
+                variant="danger"
+                className="px-6 py-2.5"
+                action={async () => {
+                  'use server'
+                  const sandbox = await Sandbox.get({ sandboxId: id })
+                  await sandbox.stop()
+                }}
+              >
+                Stop Sandbox
+              </ActionButton>
+            ) : null}
           </div>
         </section>
 
