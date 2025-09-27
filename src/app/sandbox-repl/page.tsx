@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { ActionButton } from './ActionButton'
 
 export default function SandboxPage() {
+  const isInDev = process.env.NODE_ENV === 'development'
   return (
     <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-slate-50 px-4 py-16">
       <section className="relative w-full max-w-xl overflow-hidden rounded-3xl border border-white/80 bg-white/80 shadow-[0_25px_70px_-35px_rgba(15,23,42,0.6)] backdrop-blur">
@@ -25,29 +26,31 @@ export default function SandboxPage() {
             </p>
           </div>
 
-          <ActionButton
-            className="w-full px-6 py-3 text-base"
-            action={async () => {
-              'use server'
-              const sandbox = await Sandbox.create({
-                source: {
-                  url: 'https://github.com/vercel/sandbox-example-next.git',
-                  // revision: '', // TODO: add branch from vercel env / local git
-                  type: 'git',
-                  // username: 'x-access-token',
-                  // password: process.env.SANDBOX_TEST_GITHUB_TOKEN, // Only needed for private repos
-                },
-                ports: [3000],
-                resources: { vcpus: 2 },
-                timeout: ms('15m'),
-                runtime: 'node22',
-              })
+          {isInDev && (
+            <ActionButton
+              className="w-full px-6 py-3 text-base"
+              action={async () => {
+                'use server'
+                const sandbox = await Sandbox.create({
+                  source: {
+                    url: 'https://github.com/vercel/sandbox-example-next.git',
+                    // revision: '', // TODO: add branch from vercel env / local git
+                    type: 'git',
+                    // username: 'x-access-token',
+                    // password: process.env.SANDBOX_TEST_GITHUB_TOKEN, // Only needed for private repos
+                  },
+                  ports: [3000],
+                  resources: { vcpus: 2 },
+                  timeout: ms('15m'),
+                  runtime: 'node22',
+                })
 
-              redirect(`/sandbox-repl/${sandbox.sandboxId}`)
-            }}
-          >
-            Start Sandbox
-          </ActionButton>
+                redirect(`/sandbox-repl/${sandbox.sandboxId}`)
+              }}
+            >
+              Start Sandbox
+            </ActionButton>
+          )}
 
           <p className="text-xs text-slate-400">
             Sandboxes automatically shut down after 15 minutes of inactivity to
