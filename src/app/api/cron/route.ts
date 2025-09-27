@@ -1,7 +1,11 @@
-import { Sandbox } from '@vercel/sandbox'
-import { execSync } from 'child_process'
-import { readFile } from 'fs/promises'
-import ms from 'ms'
-import { setTimeout } from 'timers/promises'
+import { sandboxCron } from '@/lib/sandboxCron'
 
-export const GET = async (request: Request) => {}
+export const GET = sandboxCron({
+  run: async () => {
+    console.log('Running cron')
+    fetch('https://webhook.site/06272e11-6f18-4831-a204-066105e8bd7b', {
+      method: 'POST',
+      body: JSON.stringify({ message: 'Running in a sandbox!' }),
+    })
+  },
+})

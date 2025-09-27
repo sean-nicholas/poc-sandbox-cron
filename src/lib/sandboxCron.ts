@@ -14,7 +14,8 @@ export const sandboxCron = async ({
   return async (request: Request) => {
     if (process.env.IN_SANDBOX === 'true') {
       await run()
-      // TODO: Stop the sandbox
+      const sandbox = await Sandbox.get({ sandboxId: process.env.SANDBOX_ID! })
+      await sandbox.stop()
       return
     }
 
@@ -59,7 +60,11 @@ export const sandboxCron = async ({
       stderr: process.stderr,
       stdout: process.stdout,
       detached: true,
-      env: { IN_SANDBOX: 'true' },
+      env: {
+        IN_SANDBOX: 'true',
+        SANDBOX_ID: sandbox.sandboxId,
+        VERCEL_OIDC_TOKEN: process.env.VERCEL_OIDC_TOKEN!,
+      },
     })
 
     console.log(`Waiting for the dev server to respond at ${url.href}...`)
