@@ -16,10 +16,12 @@ export default function SandboxPage() {
             <span className="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-indigo-600">
               Sandbox REPL
             </span>
-            <h1 className="text-2xl font-semibold text-slate-900">Launch a fresh sandbox</h1>
+            <h1 className="text-2xl font-semibold text-slate-900">
+              Launch a fresh sandbox
+            </h1>
             <p className="text-sm leading-relaxed text-slate-600">
-              Spin up an isolated Vercel Sandbox to experiment, run commands, or reproduce tricky bugs without
-              touching production infrastructure.
+              Spin up an isolated Vercel Sandbox to experiment, run commands, or
+              reproduce tricky bugs without touching production infrastructure.
             </p>
           </div>
 
@@ -41,14 +43,15 @@ export default function SandboxPage() {
                 runtime: 'node22',
               })
 
-              redirect(`/sandbox/${sandbox.sandboxId}`)
+              redirect(`/sandbox-repl/${sandbox.sandboxId}`)
             }}
           >
             Start Sandbox
           </ActionButton>
 
           <p className="text-xs text-slate-400">
-            Sandboxes automatically shut down after 15 minutes of inactivity to free up resources.
+            Sandboxes automatically shut down after 15 minutes of inactivity to
+            free up resources.
           </p>
         </div>
       </section>
