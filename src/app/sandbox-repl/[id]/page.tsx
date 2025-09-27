@@ -9,15 +9,58 @@ export default async function SandboxPage({
 }) {
   const { id } = await params
   const sandbox = await Sandbox.get({ sandboxId: id })
+  const status = sandbox.status
+
+  const statusStyles: Record<string, { label: string; badgeClass: string; chipClass: string }> = {
+    pending: {
+      label: 'Pending',
+      badgeClass: 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200',
+      chipClass: 'bg-amber-100/60 text-amber-700',
+    },
+    running: {
+      label: 'Running',
+      badgeClass: 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-200',
+      chipClass: 'bg-emerald-100/60 text-emerald-700',
+    },
+    stopping: {
+      label: 'Stopping',
+      badgeClass: 'bg-sky-50 text-sky-700 ring-1 ring-inset ring-sky-200',
+      chipClass: 'bg-sky-100/60 text-sky-700',
+    },
+    stopped: {
+      label: 'Stopped',
+      badgeClass: 'bg-slate-100 text-slate-600 ring-1 ring-inset ring-slate-200',
+      chipClass: 'bg-slate-200/70 text-slate-600',
+    },
+    failed: {
+      label: 'Failed',
+      badgeClass: 'bg-rose-50 text-rose-700 ring-1 ring-inset ring-rose-200',
+      chipClass: 'bg-rose-100/70 text-rose-700',
+    },
+  }
+
+  const statusMeta = statusStyles[status] ?? {
+    label: status,
+    badgeClass: 'bg-slate-100 text-slate-600 ring-1 ring-inset ring-slate-200',
+    chipClass: 'bg-slate-200/70 text-slate-600',
+  }
   return (
     <main className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-slate-50 px-4 py-12">
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-10">
         <section className="overflow-hidden rounded-3xl border border-white/80 bg-white/80 p-8 shadow-[0_20px_60px_-35px_rgba(15,23,42,0.45)] backdrop-blur">
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div className="space-y-3">
-              <span className="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-600">
-                Active Sandbox
-              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center rounded-full bg-slate-900/90 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
+                  Sandbox
+                </span>
+                <span
+                  className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${statusMeta.badgeClass}`}
+                >
+                  <span className={`inline-block h-1.5 w-1.5 rounded-full ${statusMeta.chipClass}`} />
+                  {statusMeta.label}
+                </span>
+              </div>
               <h1 className="break-all text-2xl font-semibold text-slate-900">{sandbox.sandboxId}</h1>
               <p className="text-sm leading-relaxed text-slate-600">
                 Use the command runner below to interact with this environment. Command output currently
