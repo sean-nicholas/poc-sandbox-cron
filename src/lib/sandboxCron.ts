@@ -2,7 +2,7 @@ import { Sandbox } from '@vercel/sandbox'
 import ms from 'ms'
 import { setTimeout } from 'timers/promises'
 
-export const sandboxCron = async ({
+export const sandboxCron = ({
   run,
   timeout = ms('5m'),
   vcpus = 2,
