@@ -1,6 +1,7 @@
 import { Sandbox } from '@vercel/sandbox'
 import ms from 'ms'
 import { headers } from 'next/headers'
+import { after } from 'next/server'
 import { setTimeout } from 'timers/promises'
 
 export const sandboxCron = ({
@@ -26,10 +27,14 @@ export const sandboxCron = ({
     }
 
     if (process.env.IN_SANDBOX === 'true') {
-      await run()
-      const sandbox = await Sandbox.get({ sandboxId: process.env.SANDBOX_ID! })
-      await sandbox.stop()
-      return
+      after(async () => {
+        await run()
+        const sandbox = await Sandbox.get({
+          sandboxId: process.env.SANDBOX_ID!,
+        })
+        await sandbox.stop()
+      })
+      return new Response('Running...', { status: 202 })
     }
 
     console.log('Creating sandbox')
