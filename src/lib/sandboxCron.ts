@@ -14,11 +14,7 @@ export const sandboxCron = ({
 }) => {
   return async (request: Request) => {
     const filteredEnv = removeUndefinedFromEnv(process.env)
-    const { VERCEL_OIDC_TOKEN, CRON_SECRET } = filteredEnv
-
-    if (!VERCEL_OIDC_TOKEN) {
-      throw new Error('VERCEL_OIDC_TOKEN is required to start the sandbox')
-    }
+    const { CRON_SECRET } = filteredEnv
 
     if (!CRON_SECRET) {
       throw new Error('CRON_SECRET is not set')
@@ -65,10 +61,24 @@ export const sandboxCron = ({
       process.exit(1)
     }
 
+    console.log('Bulding the project...')
+    const build = await sandbox.runCommand({
+      cmd: 'pnpm',
+      args: ['build'],
+      stderr: process.stderr,
+      stdout: process.stdout,
+      env: filteredEnv,
+    })
+
+    if (build.exitCode != 0) {
+      console.log('building the project failed')
+      process.exit(1)
+    }
+
     console.log(`Starting the development server...`)
     await sandbox.runCommand({
       cmd: 'pnpm',
-      args: ['run', 'dev'],
+      args: ['start'],
       stderr: process.stderr,
       stdout: process.stdout,
       detached: true,
@@ -76,7 +86,6 @@ export const sandboxCron = ({
         ...filteredEnv,
         IN_SANDBOX: 'true',
         SANDBOX_ID: sandbox.sandboxId,
-        VERCEL_OIDC_TOKEN,
       },
     })
 
