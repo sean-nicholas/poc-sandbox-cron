@@ -1,5 +1,6 @@
 import { Sandbox } from '@vercel/sandbox'
 import ms from 'ms'
+import { headers } from 'next/headers'
 import { setTimeout } from 'timers/promises'
 
 export const sandboxCron = ({
@@ -12,18 +13,28 @@ export const sandboxCron = ({
   timeout?: number
 }) => {
   return async (request: Request) => {
+    const filteredEnv = removeUndefinedFromEnv(process.env)
+    const { VERCEL_OIDC_TOKEN, CRON_SECRET } = filteredEnv
+
+    if (!VERCEL_OIDC_TOKEN) {
+      throw new Error('VERCEL_OIDC_TOKEN is required to start the sandbox')
+    }
+
+    if (!CRON_SECRET) {
+      throw new Error('CRON_SECRET is not set')
+    }
+
+    const authHeader = (await headers()).get('authorization')
+    if (authHeader !== `Bearer ${CRON_SECRET}`) {
+      return new Response('Unauthorized', { status: 401 })
+    }
+
     if (process.env.IN_SANDBOX === 'true') {
       await run()
       const sandbox = await Sandbox.get({ sandboxId: process.env.SANDBOX_ID! })
       await sandbox.stop()
       return
     }
-
-    const originalUrl = new URL(request.url)
-    const url = new URL(
-      `${originalUrl.pathname}${originalUrl.search}${originalUrl.hash}`,
-      'http://localhost:3000',
-    )
 
     console.log('Creating sandbox')
     const sandbox = await Sandbox.create({
@@ -46,6 +57,7 @@ export const sandboxCron = ({
       args: ['install'],
       stderr: process.stderr,
       stdout: process.stdout,
+      env: filteredEnv,
     })
 
     if (install.exitCode != 0) {
@@ -61,11 +73,18 @@ export const sandboxCron = ({
       stdout: process.stdout,
       detached: true,
       env: {
+        ...filteredEnv,
         IN_SANDBOX: 'true',
         SANDBOX_ID: sandbox.sandboxId,
-        VERCEL_OIDC_TOKEN: process.env.VERCEL_OIDC_TOKEN!,
+        VERCEL_OIDC_TOKEN,
       },
     })
+
+    const originalUrl = new URL(request.url)
+    const url = new URL(
+      `${originalUrl.pathname}${originalUrl.search}${originalUrl.hash}`,
+      'http://localhost:3000',
+    )
 
     console.log(`Waiting for the dev server to respond at ${url.href}...`)
 
@@ -96,3 +115,10 @@ export const sandboxCron = ({
     return new Response('Started')
   }
 }
+
+const removeUndefinedFromEnv = (env: NodeJS.ProcessEnv) =>
+  Object.fromEntries(
+    Object.entries(env).filter(
+      (entry): entry is [string, string] => entry[1] !== undefined,
+    ),
+  )
