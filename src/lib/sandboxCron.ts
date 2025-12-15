@@ -100,28 +100,63 @@ export const sandboxCron = ({
       'http://localhost:3000',
     )
 
+    const forwardedHeaders = new Headers()
+    request.headers.forEach((value, key) => {
+      const lowerKey = key.toLowerCase()
+      if (lowerKey === 'host' || lowerKey === 'content-length') {
+        return
+      }
+
+      forwardedHeaders.append(key, value)
+    })
+
+    const requestMethod = request.method
+    const normalizedMethod = requestMethod.toUpperCase()
+    let requestBody: Uint8Array | undefined
+
+    if (normalizedMethod !== 'GET' && normalizedMethod !== 'HEAD') {
+      const clonedRequest = request.clone()
+      const bodyBuffer = await clonedRequest.arrayBuffer()
+      requestBody = new Uint8Array(bodyBuffer)
+    }
+
     console.log(`Waiting for the dev server to respond at ${url.href}...`)
 
-    // TODO: Try this with fetch?
     const maxAttempts = 15
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      const probe = await sandbox.runCommand({
-        cmd: 'curl',
-        args: [url.href],
-      })
+      try {
+        const response = await fetch(url.href, {
+          method: requestMethod,
+          headers: forwardedHeaders,
+          ...(requestBody !== undefined ? { body: requestBody } : {}),
+        })
 
-      if (probe.exitCode === 0) {
-        console.log(`Server responded on attempt ${attempt}`)
-        break
-      }
+        if (response.body) {
+          try {
+            await response.body.cancel()
+          } catch {
+            // Ignore cancellation errors
+          }
+        }
 
-      if (attempt === maxAttempts) {
-        throw new Error(
-          `Server failed to respond after ${maxAttempts} attempts`,
+        console.log(
+          `Server responded on attempt ${attempt} with status ${response.status}`,
         )
-      }
+        break
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        console.log(
+          `Server did not respond on attempt ${attempt}: ${message}`,
+        )
 
-      await setTimeout(ms('2s'))
+        if (attempt === maxAttempts) {
+          throw new Error(
+            `Server failed to respond after ${maxAttempts} attempts`,
+          )
+        }
+
+        await setTimeout(ms('2s'))
+      }
     }
 
     console.log('Sandbox started')
